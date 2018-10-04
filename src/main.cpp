@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-
+#include <LiquidCrystal.h>
 #include "Configuration.h"
 #include "Settings.h"
 #include "Button.h"
@@ -65,6 +65,11 @@ static unsigned int lastButtonSwitchBoardReadTime = 0;
 
 static Alarm alarmHandler = Alarm();
 
+int rotaryEncoderValue()
+{
+    return 100;
+}
+
 void handleButtonSwitchBoard()
 {
 
@@ -83,7 +88,7 @@ void handleButtonSwitchBoard()
             };
         }
         if (pressedButton != NULL)
-            menu.move(pressedButton, 100);
+            menu.move(pressedButton, rotaryEncoderValue());
     }
     else
     {
@@ -114,6 +119,9 @@ void setupMenu()
 
 void setup()
 {
+    Serial.begin(9600);
+    Serial.println("Booting \n");
+
     fpSystem.state = INIT;
     settings.load();
     settings.debugPrintSettings();
@@ -126,14 +134,16 @@ void setup()
     setupInterrupts();
 
     fpSystem.state = IDLE;
+
     alarmHandler.once();
 }
 
 void loop()
 {
+
     alarmHandler.handle();
 }
-
+/*
 int main(void)
 {
     if (LOCAL_TEST)
@@ -188,3 +198,4 @@ int main(void)
 
     return 0;
 }
+*/

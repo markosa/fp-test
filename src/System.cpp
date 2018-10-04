@@ -11,7 +11,8 @@
 #include "State.h"
 #include "ProgramState.h"
 
-System::System() {
+System::System()
+{
 	this->currentDevTime = NULL;
 	this->currentFixTime = NULL;
 	this->currentStopTime = NULL;
@@ -19,4 +20,3 @@ System::System() {
 	this->nextProgramState = UNINITIALIZED;
 	this->state = INIT;
 }
-

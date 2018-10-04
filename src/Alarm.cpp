@@ -25,12 +25,17 @@ void Alarm::once()
 }
 void Alarm::handle()
 {
-
-    tone(ALARM_BUZZER_PIN, ALARM_BUZZER_TONE);
-
-    if (alarmOnce)
+    if (this->active)
     {
-        this->alarmOnce = false;
-        this->active = true;
+        Serial.println("Alarm: Active");
+        tone(ALARM_BUZZER_PIN, ALARM_BUZZER_TONE, 500);
+
+        if (this->alarmOnce)
+        {
+            Serial.println("Alarm: Alarm oncce -> off");
+
+            this->alarmOnce = false;
+            this->active = false;
+        }
     }
 }
