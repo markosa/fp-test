@@ -6,7 +6,6 @@
  */
 
 #include <stdio.h>
-#include <LiquidCrystal.h>
 #include "Configuration.h"
 #include "Settings.h"
 #include "Button.h"
@@ -14,7 +13,12 @@
 #include "MenuNode.h"
 #include "System.h"
 #include "Alarm.h"
-
+#include "Motor.h"
+#include "ButtonBoard.h"
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include "RotaryEncoder.h"
+#include <pins_arduino.h>
 void setupMenu();
 void init();
 
@@ -62,38 +66,16 @@ static MenuNode *STA_SUB[] = {&STA_STOP};
 static MenuNode *RUN_SUB[] = {&RUN_CONFIRM_DEV_START, &RUN_STOP, &RUN_FIX, &RUN_WASH};
 
 static unsigned int lastButtonSwitchBoardReadTime = 0;
+// static RotaryEncoder rotaryEncoder = RotaryEncoder(ROTARY_ENCODER_DT_PIN, ROTARY_ENCODER_CLK_PIN, ROTARY_ENCODER_SW_PIN);
+static Alarm alarm = Alarm();
+static Motor motor = Motor();
+static ButtonBoard bb = ButtonBoard(BUTTON_SWITCH_BOARD_ANALOG_PIN, BUTTON_SWITCH_BOARD_DEBOUNCE_THRESHOLD, *ALL_BUTTONS, ALL_BUTTONS_length);
 
-static Alarm alarmHandler = Alarm();
+LiquidCrystal_I2C lcd(LCD_I2C_ADDR, LCD_WIDTH, LCD_HEIGHT);
 
 int rotaryEncoderValue()
 {
     return 100;
-}
-
-void handleButtonSwitchBoard()
-{
-
-    if ((millis() - lastButtonSwitchBoardReadTime) > BUTTON_SWITCH_BOARD_DEBOUNCE_THRESHOLD)
-    {
-        int adcValue = analogRead(BUTTON_SWITCH_BOARD_ANALOG_PIN);
-        Button *pressedButton = NULL;
-        for (int i = 0; i < ALL_BUTTONS_length; i++)
-        {
-            Button *b = ALL_BUTTONS[i];
-            if (adcValue >= b->getAdMin() && adcValue <= b->getAdMax())
-            {
-                pressedButton = b;
-                lastButtonSwitchBoardReadTime = millis();
-                break;
-            };
-        }
-        if (pressedButton != NULL)
-            menu.move(pressedButton, rotaryEncoderValue());
-    }
-    else
-    {
-        debug_print("handleButtonSwitchBoard: not in debounce threshold", NULL);
-    }
 }
 
 void setupInterrupts()
@@ -117,85 +99,63 @@ void setupMenu()
     menu.add(&ALARM_MAIN, NULL, 0);
 }
 
+void mainScreenTest()
+{
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("D: 15.50m  S: 00.50m");
+    lcd.setCursor(0, 1);
+    lcd.print("F: 10.00m  W: 10.00m");
+    lcd.setCursor(0, 2);
+    lcd.print("        @50RPM");
+    lcd.setCursor(0, 3);
+    lcd.blink_on();
+    lcd.print("frp> ready");
+
+    lcd.cursor_off();
+}
+
 void setup()
 {
     Serial.begin(9600);
     Serial.println("Booting \n");
+    lcd.init(); // initialize the lcd
+    lcd.clear();
+    // Print a message to the LCD.
+    lcd.backlight();
+    lcd.setCursor(0, 0);
+    lcd.print("FRP Version 0.1");
+    lcd.setCursor(0, 1);
+    lcd.print("Initializing...");
 
     fpSystem.state = INIT;
     settings.load();
+
     settings.debugPrintSettings();
 
     // Setup button board control pin
-    pinMode(BUTTON_SWITCH_BOARD_ANALOG_PIN, INPUT);
 
     setupMenu();
+    //rotaryEncoder.enable();
 
     setupInterrupts();
 
-    fpSystem.state = IDLE;
+    alarm.once();
+    bb.enable();
 
-    alarmHandler.once();
+    mainScreenTest();
+    fpSystem.state = IDLE;
 }
 
 void loop()
 {
 
-    alarmHandler.handle();
-}
-/*
-int main(void)
-{
-    if (LOCAL_TEST)
+    bb.handle();
+    alarm.handle();
+
+    if (bb.isActive())
     {
-        setup();
-
-        while (1)
-        {
-            char c;
-            printf("\nq=PRGSET w=SET e=STA r=RUN t=ALARM\n");
-
-            c = getchar();
-            getchar();
-            printf("Pressed: %c\n", c);
-            Button *buttonPressed = NULL;
-            switch (c)
-            {
-            case 'q':
-                printf("PRGSET****\n");
-                buttonPressed = &BUTTON_PRGSET;
-                break;
-            case 'w':
-                printf("SET****\n");
-                buttonPressed = &BUTTON_SET;
-
-                break;
-            case 'e':
-                printf("STA****\n");
-                buttonPressed = &BUTTON_STA;
-
-                break;
-            case 'r':
-                printf("RUN****\n");
-                buttonPressed = &BUTTON_RUN;
-
-                break;
-            case 't':
-                printf("ALARM****\n");
-                buttonPressed = &BUTTON_ALARM;
-
-                break;
-            }
-            if (buttonPressed == NULL)
-            {
-                printf("null\n");
-            }
-
-            menu.move(buttonPressed, 100);
-            MenuNode *current = menu.getCurrentNode();
-        }
+        Button *buttonPressed = bb.getButton();
+        menu.move(buttonPressed, 100);
     }
-
-    return 0;
 }
-*/

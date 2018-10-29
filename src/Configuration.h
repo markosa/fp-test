@@ -59,7 +59,28 @@ static const int HBRIDGE_MOTOR_SHUTDOWN_THRESHOLD = 10;
  * 
  **/
 
-static const int ALARM_BUZZER_PIN = PD5;
+static const int ALARM_BUZZER_PIN = PD5; // D5
 static const int ALARM_BUZZER_TONE = 1000;
+
+/**
+ * 
+ * LCD 
+ * 
+ **/
+
+#define LCD_I2C_ADDR 0x27
+#define LCD_WIDTH 20
+#define LCD_HEIGHT 20
+
+/**
+ * 
+ * VALUE KNOB / ROTARY ENCODER PINS
+ * 
+ **/
+
+static const int ROTARY_ENCODER_SW_PIN = 9;  // D9
+static const int ROTARY_ENCODER_DT_PIN = 3;  // D8
+static const int ROTARY_ENCODER_CLK_PIN = 2; // D7
+static const unsigned int ROTARY_ENCODER_DEBOUNCE_THRESHOLD = 5;
 
 #endif /* CONFIGURATION_H_ */

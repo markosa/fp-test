@@ -76,6 +76,7 @@ void Menu::handleForwardMove(Button *button)
 
 void Menu::handleBackwardMove(Button *button)
 {
+	debug_print("Backward move not yet implemented", NULL);
 	return;
 }
 
